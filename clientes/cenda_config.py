@@ -78,7 +78,9 @@ GUARDAR_LOGS_ARCHIVO = True
 ARCHIVO_LOG = f"./logs/scoring_{NOMBRE_CLIENTE.replace(' ', '_').lower()}.log"
 
 SCORE_MINIMO_RESULTADO = 30
-MAX_DIAS_ATRAS = 5
+
+#ACA SE DEFINE CUANTOS DIAS HACIA ATRAS SE BUSCAN LAS LICITACIONES QUE CUMPLAN CON EL FILTRO DURO
+MAX_DIAS_ATRAS = 15
 
 # ============================================================
 # IA: FILTRO SEMÁNTICO GPT
