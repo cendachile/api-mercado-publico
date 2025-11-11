@@ -52,4 +52,4 @@ python RUN.py
 
 MEJORAS FUTURAS
 
-*Sacar algunas api keys que están hardcodeadas
+*Sacar un par de api keys que están hardcodeadas

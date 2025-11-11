@@ -14,7 +14,7 @@ from pathlib import Path
 # CONFIGURACIÓN
 # ============================================================
 
-API_URL = "http://127.0.0.1:5000/licitaciones"  # tu API local o remota
+API_URL = "http://34.46.3.229:5000/licitaciones"
 API_KEY = "2244"
 MAX_DIAS_ATRAS = 10         # límite de revisión hacia atrás
 PAUSA_ENTRE_DIAS = 2.0      # segundos entre descargas
