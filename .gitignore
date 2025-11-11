@@ -1,0 +1,6 @@
+env/
+base_local/
+catalog_local.json
+log/
+resultados/
+historial/
