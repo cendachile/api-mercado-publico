@@ -92,10 +92,61 @@ def _get_comprador_field(lic: dict, key: str, fallback_key: Optional[str] = None
         return "" if val is None else str(val)
     return ""
 
+def _get_monto(lic: dict):
+    """
+    Obtiene el monto de la licitación.
+    Prioriza MontoEstimado, luego Monto. Devuelve número o string.
+    """
+    val = lic.get("MontoEstimado")
+    if val in (None, "", 0):
+        val = lic.get("Monto")
+    # si es string numérica, intenta castear
+    if isinstance(val, str):
+        try:
+            return float(val.replace(".", "").replace(",", "."))
+        except Exception:
+            return val
+    return val if val is not None else ""
+
+def _get_fecha_cierre(lic: dict) -> str:
+    """
+    Obtiene la fecha de cierre y la formatea como: DD-MM-AAAA / HH:MM.
+    Prioriza 'FechaCierre' directo y luego 'Fechas'['FechaCierre'].
+    Si no se puede parsear, devuelve el valor original.
+    """
+    fc = lic.get("FechaCierre")
+    if not fc:
+        fechas = lic.get("Fechas")
+        if isinstance(fechas, dict):
+            fc = fechas.get("FechaCierre", "")
+    if not fc:
+        return ""
+
+    fc_str = str(fc).strip()
+    # Normalizamos para intentar parsear YYYY-MM-DD HH:MM:SS o YYYY-MM-DDTHH:MM:SS
+    fc_clean = fc_str.replace("T", " ")
+
+    # Intento simple por slicing si respeta el patrón YYYY-MM-DD HH:MM:SS
+    try:
+        if len(fc_clean) >= 16 and fc_clean[4] == "-" and fc_clean[7] == "-":
+            y = fc_clean[0:4]
+            m = fc_clean[5:7]
+            d = fc_clean[8:10]
+            h = fc_clean[11:13]
+            mi = fc_clean[14:16]
+            return f"{d}-{m}-{y} / {h}:{mi}"
+    except Exception:
+        pass
+
+    # Fallback: si no pudimos formatear, devolvemos tal cual
+    return fc_str
+
+
 def armar_dataframe(licitaciones: List[dict]) -> pd.DataFrame:
     """
     Columnas (en orden):
-    N°, Nombre, Descripción, Nombre Organismo, Región, Comuna, CodigoExterno
+    N°, Nombre, Descripción, Nombre Organismo, Monto, Fecha Cierre,
+    Región, Comuna, CodigoExterno
     """
     rows = []
     for i, lic in enumerate(licitaciones, start=1):
@@ -104,11 +155,23 @@ def armar_dataframe(licitaciones: List[dict]) -> pd.DataFrame:
             "Nombre":           lic.get("Nombre", "") or "",
             "Descripción":      lic.get("Descripcion", "") or "",
             "Nombre Organismo": _get_comprador_field(lic, "NombreOrganismo", "NombreOrganismo"),
+            "Monto":            _get_monto(lic),
+            "Fecha Cierre":     _get_fecha_cierre(lic),
             "Región":           _get_comprador_field(lic, "RegionUnidad", "RegionUnidad"),
             "Comuna":           _get_comprador_field(lic, "ComunaUnidad", "ComunaUnidad"),
             "CodigoExterno":    lic.get("CodigoExterno", "") or "",
         })
-    cols = ["N°","Nombre","Descripción","Nombre Organismo","Región","Comuna","CodigoExterno"]
+    cols = [
+        "N°",
+        "Nombre",
+        "Descripción",
+        "Nombre Organismo",
+        "Monto",
+        "Fecha Cierre",
+        "Región",
+        "Comuna",
+        "CodigoExterno",
+    ]
     return pd.DataFrame(rows, columns=cols)
 
 def escribir_excel_formateado(archivo_salida: Path, cliente: str, df: pd.DataFrame, faltantes: List[str]):
@@ -124,6 +187,7 @@ def escribir_excel_formateado(archivo_salida: Path, cliente: str, df: pd.DataFra
         fmt_text   = wb.add_format({"text_wrap": False, "border": 1})
         fmt_wrap   = wb.add_format({"text_wrap": True,  "border": 1})
         fmt_code   = wb.add_format({"border": 1})
+        fmt_monto  = wb.add_format({"border": 1, "num_format": "#,##0"})
 
         # Encabezados
         for col_num, col_name in enumerate(df.columns):
@@ -139,17 +203,21 @@ def escribir_excel_formateado(archivo_salida: Path, cliente: str, df: pd.DataFra
                     ws.write(r, c, val, fmt_wrap)
                 elif colname == "CodigoExterno":
                     ws.write(r, c, val, fmt_code)
+                elif colname == "Monto":
+                    ws.write(r, c, val, fmt_monto)
                 else:
                     ws.write(r, c, val, fmt_text)
 
-        # Anchos de columna
-        ws.set_column("A:A", 6)   # N°
-        ws.set_column("B:B", 48)  # Nombre
-        ws.set_column("C:C", 90)  # Descripción (ancha y con wrap)
-        ws.set_column("D:D", 36)  # Nombre Organismo
-        ws.set_column("E:E", 16)  # Región
-        ws.set_column("F:F", 18)  # Comuna
-        ws.set_column("G:G", 24)  # CodigoExterno
+        # Anchos de columna (ajustados al nuevo orden)
+        ws.set_column("A:A", 6)    # N°
+        ws.set_column("B:B", 48)   # Nombre
+        ws.set_column("C:C", 90)   # Descripción
+        ws.set_column("D:D", 36)   # Nombre Organismo
+        ws.set_column("E:E", 16)   # Monto
+        ws.set_column("F:F", 22)   # Fecha Cierre
+        ws.set_column("G:G", 16)   # Región
+        ws.set_column("H:H", 18)   # Comuna
+        ws.set_column("I:I", 24)   # CodigoExterno
 
         # Congelar fila de encabezado
         ws.freeze_panes(1, 0)
