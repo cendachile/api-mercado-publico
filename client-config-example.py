@@ -2,10 +2,20 @@
 # CONFIGURACIÓN GENERAL DEL CLIENTE
 # ============================================================
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 NOMBRE_CLIENTE = "CENDA"
 
 # Carpeta de salida base (se usa tanto en filtro_duro como en scoring)
 DIRECTORIO_SALIDA = f"./resultados/{NOMBRE_CLIENTE.replace(' ', '_').lower()}"
+
+# API key (ticket) de Mercado Público. Se lee del entorno (.env), nunca hardcodeada.
+API_KEY = os.getenv("MERCADOPUBLICO_TICKET", "")
+BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json"
+
 
 # ============================================================
 # FILTROS DUROS (ELIMINATORIOS)
@@ -94,8 +104,8 @@ DESCRIPCION_CLIENTE = (
 # 🔸 Modelo de OpenAI a utilizar
 IA_MODELO = "gpt-4o-mini"
 
-# 🔸 API key específica del cliente
-IA_API_KEY = sadfasdfsdafsad
+# 🔸 API key específica del cliente (OpenAI). Se lee del entorno (.env).
+IA_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # 🔸 Tamaño máximo de lote por solicitud a la IA
 IA_BATCH_SIZE = 10  # número de licitaciones por bloque

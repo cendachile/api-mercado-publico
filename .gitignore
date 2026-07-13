@@ -1,4 +1,6 @@
 env/
+.env
+__pycache__/
 base_local/
 catalog_local.json
 log/

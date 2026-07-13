@@ -9,13 +9,17 @@ import sys
 sys.dont_write_bytecode = True
 import os, json, time, datetime, requests, hashlib
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ============================================================
 # CONFIGURACIÓN
 # ============================================================
 
-API_URL = "http://34.46.3.229:5000/licitaciones"
-API_KEY = "2244"
+# La URL tiene un default razonable; la key SIEMPRE viene del entorno (.env).
+API_URL = os.getenv("IMPAKT_API_URL", "http://34.46.3.229:5000/licitaciones")
+API_KEY = os.getenv("IMPAKT_API_KEY")
 MAX_DIAS_ATRAS = 10         # límite de revisión hacia atrás
 PAUSA_ENTRE_DIAS = 2.0      # segundos entre descargas
 PAUSA_ENTRE_LLAMADAS = 0.5  # segundos entre requests HTTP
@@ -79,9 +83,17 @@ def checksum_archivo(path: Path):
 
 def sincronizar():
     log("===== INICIO SINCRONIZACIÓN =====")
+    if not API_KEY:
+        log("❌ Falta IMPAKT_API_KEY en el entorno (.env). Aborta.")
+        sys.exit(1)
     inicio = time.time()
 
-    remoto = fetch_catalog(API_URL, API_KEY)
+    try:
+        remoto = fetch_catalog(API_URL, API_KEY)
+    except requests.exceptions.RequestException as e:
+        log(f"⚠️ API no disponible ({e.__class__.__name__}): se continúa con los datos locales ya descargados.")
+        return
+
     if not remoto:
         log("❌ No se pudo obtener /catalog de la API.")
         return

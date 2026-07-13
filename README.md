@@ -35,21 +35,21 @@ En este archivo se definen los parámetros personalizados para hacer match con l
 COMO INSTALAR
 
 1) Para instalar el proyecto, primero clona el repositorio con el comando:
-git clone https://github.com/willem326/mercado_publico.git
+git clone https://github.com/cendachile/api-mercado-publico
 
-2) Crea un entorno virtual ejecutando:
+1) Crea un entorno virtual ejecutando:
 python -m venv env
 
-3) Activa el entorno virtual:
+1) Activa el entorno virtual:
 En Windows: env\Scripts\activate
 En Linux o macOS: source env/bin/activate
 
-4) Instala las dependencias necesarias con:
+1) Instala las dependencias necesarias con:
 pip install -r requirements.txt
 
-5) Finalmente, ejecuta el proceso principal con:
+1) Finalmente, ejecuta el proceso principal con:
 python RUN.py
 
 MEJORAS FUTURAS
 
-*Sacar un par de api keys que están hardcodeadas
+

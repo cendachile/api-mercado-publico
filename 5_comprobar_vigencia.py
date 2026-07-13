@@ -12,8 +12,6 @@ import requests, importlib.util
 # CONFIGURACIÓN GENERAL
 # ============================================================
 
-API_KEY = "EF2AF107-D5E2-4D89-A1BA-8EA47735905E"
-BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json"
 ESTADOS_VIGENTES = [5, 6]
 PAUSA_ENTRE_LIC = 2.5
 REINTENTOS = 3
@@ -53,8 +51,8 @@ def cargar_config_cliente(nombre_archivo: str):
     spec.loader.exec_module(mod)
     return mod
 
-def url_detalle(codigo: str) -> str:
-    return f"{BASE_URL}?codigo={codigo}&ticket={API_KEY}"
+def url_detalle(codigo: str, base_url: str, api_key: str) -> str:
+    return f"{base_url}?codigo={codigo}&ticket={api_key}"
 
 def obtener_mas_reciente_en(dir_path: Path, patron: str):
     archivos = list(dir_path.glob(patron))
@@ -95,6 +93,17 @@ def procesar_cliente(config_file: str):
 
     try:
         cfg = cargar_config_cliente(config_file)
+        
+        # Validar que existan API_KEY y BASE_URL en la configuración del cliente
+        if not hasattr(cfg, 'API_KEY') or not hasattr(cfg, 'BASE_URL'):
+            error_msg = f"❌ Error: Falta configurar detalles de API del cliente en {config_file}"
+            print(error_msg)
+            logging.error(error_msg)
+            return
+        
+        api_key = cfg.API_KEY
+        base_url = cfg.BASE_URL
+        
         hoy = datetime.date.today()
 
         # ----- Cargar archivo de activas como fuente -----
@@ -141,7 +150,7 @@ def procesar_cliente(config_file: str):
 
         for idx, codigo in enumerate(sorted(codigos_activas), start=1):
             print(f"[{idx}/{len(codigos_activas)}] {nombre_cliente}: consultando {codigo} …")
-            r = safe_get(url_detalle(codigo))
+            r = safe_get(url_detalle(codigo, base_url, api_key))
             if not r:
                 logging.warning(f"{nombre_cliente} - sin respuesta para {codigo}")
                 continue
